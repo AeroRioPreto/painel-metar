@@ -21,54 +21,63 @@ body {
     text-align: center;
 }
 
+.logo {
+    width: 120px;
+    margin-bottom: 10px;
+}
+
 .titulo {
-    font-size: 60px;
+    font-size: 55px;
     font-weight: bold;
     letter-spacing: 4px;
 }
 
 .status {
     font-size: 30px;
-    margin-top: 15px;
+    margin-top: 10px;
     padding: 10px 25px;
     border-radius: 12px;
     font-weight: bold;
 }
 
 .metar {
-    font-size: 28px;
-    margin: 30px;
-    max-width: 80%;
+    font-size: 26px;
+    margin: 20px;
+    max-width: 85%;
+}
+
+.taf {
+    font-size: 20px;
+    color: #ccc;
+    max-width: 85%;
 }
 
 .grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 40px;
-    font-size: 28px;
+    gap: 30px;
+    margin-top: 20px;
 }
 
 .box {
     background: #121821;
-    padding: 25px;
+    padding: 20px;
     border-radius: 15px;
-    min-width: 180px;
 }
 
 .label {
-    font-size: 18px;
+    font-size: 16px;
     color: #aaa;
 }
 
 .valor {
-    font-size: 34px;
-    margin-top: 8px;
+    font-size: 30px;
 }
 
 .footer {
     position: absolute;
-    bottom: 20px;
-    font-size: 16px;
+    bottom: 15px;
+    font-size: 14px;
     color: #888;
 }
 
@@ -76,16 +85,22 @@ body {
 .mvfr { background: #2979ff; }
 .ifr { background: #d50000; }
 .lifr { background: #aa00ff; }
+
 </style>
 </head>
 
 <body>
 
 <div class="container">
+
+    <!-- LOGO -->
+    <img src="logo.png" class="logo">
+
     <div class="titulo">SBSR</div>
     <div id="status" class="status">Carregando...</div>
 
     <div id="metar" class="metar">Aguardando dados...</div>
+    <div id="taf" class="taf"></div>
 
     <div class="grid">
         <div class="box">
@@ -105,6 +120,7 @@ body {
     </div>
 
     <div class="footer" id="hora"></div>
+
 </div>
 
 <script>
@@ -112,36 +128,33 @@ const ICAO = "SBSR";
 
 async function atualizar() {
     try {
-        const url = `https://aviationweather.gov/api/data/metar?ids=${ICAO}&format=json`;
+        // METAR
+        const metarUrl = `https://aviationweather.gov/api/data/metar?ids=${ICAO}&format=json`;
+        const metarRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(metarUrl)}`);
+        const metarData = await metarRes.json();
 
-        // 🔥 Proxy estável
-        const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+        if (!metarData || metarData.length === 0) return;
 
-        const data = await res.json();
-
-        if (!data || data.length === 0) {
-            document.getElementById("status").innerText = "SEM DADOS";
-            return;
-        }
-
-        const m = data[0];
+        const m = metarData[0];
 
         document.getElementById("metar").innerText = m.rawOb;
-
-        document.getElementById("vento").innerText =
-            `${m.wdir || "--"}° ${m.wspd || "--"} kt`;
-
-        document.getElementById("vis").innerText =
-            m.visib ? `${m.visib} km` : "--";
-
-        document.getElementById("temp").innerText =
-            `${m.temp || "--"}°C`;
+        document.getElementById("vento").innerText = `${m.wdir || "--"}° ${m.wspd || "--"} kt`;
+        document.getElementById("vis").innerText = m.visib ? `${m.visib} km` : "--";
+        document.getElementById("temp").innerText = `${m.temp || "--"}°C`;
 
         const status = document.getElementById("status");
         const cat = m.fltCat || "VFR";
-
         status.innerText = cat;
         status.className = "status " + cat.toLowerCase();
+
+        // TAF
+        const tafUrl = `https://aviationweather.gov/api/data/taf?ids=${ICAO}&format=json`;
+        const tafRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(tafUrl)}`);
+        const tafData = await tafRes.json();
+
+        if (tafData && tafData.length > 0) {
+            document.getElementById("taf").innerText = tafData[0].rawTAF;
+        }
 
         document.getElementById("hora").innerText =
             "Atualizado: " + new Date().toLocaleTimeString();
@@ -152,10 +165,7 @@ async function atualizar() {
     }
 }
 
-// Atualiza a cada 5 min
 setInterval(atualizar, 300000);
-
-// Primeira execução
 atualizar();
 </script>
 
