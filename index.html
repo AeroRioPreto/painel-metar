@@ -129,7 +129,8 @@ async function atualizar() {
     // ===== METAR =====
     try {
         const metarUrl = `https://aviationweather.gov/api/data/metar?ids=${ICAO}&format=json`;
-        const metarRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(metarUrl)}`);
+
+        const metarRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(metarUrl)}&_=${Date.now()}`);
         const metarData = await metarRes.json();
 
         if (metarData && metarData.length > 0) {
@@ -151,16 +152,17 @@ async function atualizar() {
         document.getElementById("status").innerText = "ERRO METAR";
     }
 
-    // ===== TAF (RAW MAIS ESTÁVEL) =====
+    // ===== TAF =====
     try {
         const tafUrl = `https://aviationweather.gov/api/data/taf?ids=${ICAO}&format=raw`;
-        const tafRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(tafUrl)}`);
+
+        const tafRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(tafUrl)}&_=${Date.now()}`);
         const tafText = await tafRes.text();
 
-        if (tafText && !tafText.includes("No data")) {
+        if (tafText && !tafText.includes("No data") && tafText.length > 10) {
             document.getElementById("taf").innerText = tafText;
         } else {
-            document.getElementById("taf").innerText = "TAF indisponível";
+            document.getElementById("taf").innerText = "TAF não disponível no momento";
         }
 
     } catch (e) {
@@ -172,7 +174,7 @@ async function atualizar() {
         "Atualizado: " + new Date().toLocaleTimeString();
 }
 
-// Atualiza a cada 5 min
+// Atualiza a cada 5 minutos
 setInterval(atualizar, 300000);
 
 // Primeira execução
