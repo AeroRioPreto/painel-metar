@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Painel METAR - SBSR</title>
+
+<style>
+body {
+    margin: 0;
+    background: #0b0f14;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: white;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+}
+
+.titulo {
+    font-size: 60px;
+    font-weight: bold;
+    letter-spacing: 4px;
+}
+
+.status {
+    font-size: 30px;
+    margin-top: 15px;
+    padding: 10px 25px;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+.metar {
+    font-size: 28px;
+    margin: 30px;
+    max-width: 80%;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    font-size: 28px;
+}
+
+.box {
+    background: #121821;
+    padding: 25px;
+    border-radius: 15px;
+    min-width: 180px;
+}
+
+.label {
+    font-size: 18px;
+    color: #aaa;
+}
+
+.valor {
+    font-size: 34px;
+    margin-top: 8px;
+}
+
+.footer {
+    position: absolute;
+    bottom: 20px;
+    font-size: 16px;
+    color: #888;
+}
+
+.vfr { background: #00c853; }
+.mvfr { background: #2979ff; }
+.ifr { background: #d50000; }
+.lifr { background: #aa00ff; }
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="titulo">SBSR</div>
+    <div id="status" class="status">Carregando...</div>
+
+    <div id="metar" class="metar">Aguardando dados...</div>
+
+    <div class="grid">
+        <div class="box">
+            <div class="label">Vento</div>
+            <div id="vento" class="valor">--</div>
+        </div>
+
+        <div class="box">
+            <div class="label">Visibilidade</div>
+            <div id="vis" class="valor">--</div>
+        </div>
+
+        <div class="box">
+            <div class="label">Temperatura</div>
+            <div id="temp" class="valor">--</div>
+        </div>
+    </div>
+
+    <div class="footer" id="hora"></div>
+
+</div>
+
+<script>
+
+const ICAO = "SBSR";
+
+async function atualizar() {
+    try {
+        const url = `https://aviationweather.gov/api/data/metar?ids=${ICAO}&format=json`;
+
+        // 🔥 PROXY AQUI
+        const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+
+        const data = await res.json();
+
+        if (!data || data.length === 0) {
+            document.getElementById("status").innerText = "SEM DADOS";
+            return;
+        }
+
+        const m = data[0];
+
+        document.getElementById("metar").innerText = m.rawOb;
+
+        document.getElementById("vento").innerText =
+            `${m.wdir || "--"}° ${m.wspd || "--"} kt`;
+
+        document.getElementById("vis").innerText =
+            m.visib ? `${m.visib} km` : "--";
+
+        document.getElementById("temp").innerText =
+            `${m.temp || "--"}°C`;
+
+        const status = document.getElementById("status");
+        const cat = m.fltCat || "VFR";
+
+        status.innerText = cat;
+        status.className = "status " + cat.toLowerCase();
+
+        document.getElementById("hora").innerText =
+            "Atualizado: " + new Date().toLocaleTimeString();
+
+    } catch (e) {
+        console.error(e);
+        document.getElementById("status").innerText = "ERRO";
+    }
+}
+
+setInterval(atualizar, 300000);
+atualizar();
+
+</script>
+
+</body>
+</html>
