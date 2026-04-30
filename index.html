@@ -29,7 +29,6 @@ body {
 .titulo {
     font-size: 55px;
     font-weight: bold;
-    letter-spacing: 4px;
 }
 
 .status {
@@ -42,7 +41,7 @@ body {
 
 .metar {
     font-size: 26px;
-    margin: 20px;
+    margin: 15px;
     max-width: 85%;
 }
 
@@ -50,12 +49,13 @@ body {
     font-size: 20px;
     color: #ccc;
     max-width: 85%;
+    white-space: pre-wrap;
 }
 
 .grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
+    gap: 25px;
     margin-top: 20px;
 }
 
@@ -85,7 +85,6 @@ body {
 .mvfr { background: #2979ff; }
 .ifr { background: #d50000; }
 .lifr { background: #aa00ff; }
-
 </style>
 </head>
 
@@ -93,14 +92,13 @@ body {
 
 <div class="container">
 
-    <!-- LOGO -->
     <img src="logo.png" class="logo">
 
     <div class="titulo">SBSR</div>
     <div id="status" class="status">Carregando...</div>
 
     <div id="metar" class="metar">Aguardando dados...</div>
-    <div id="taf" class="taf"></div>
+    <div id="taf" class="taf">Carregando TAF...</div>
 
     <div class="grid">
         <div class="box">
@@ -127,45 +125,57 @@ body {
 const ICAO = "SBSR";
 
 async function atualizar() {
+
+    // ===== METAR =====
     try {
-        // METAR
         const metarUrl = `https://aviationweather.gov/api/data/metar?ids=${ICAO}&format=json`;
         const metarRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(metarUrl)}`);
         const metarData = await metarRes.json();
 
-        if (!metarData || metarData.length === 0) return;
+        if (metarData && metarData.length > 0) {
+            const m = metarData[0];
 
-        const m = metarData[0];
+            document.getElementById("metar").innerText = m.rawOb;
+            document.getElementById("vento").innerText = `${m.wdir || "--"}° ${m.wspd || "--"} kt`;
+            document.getElementById("vis").innerText = m.visib ? `${m.visib} km` : "--";
+            document.getElementById("temp").innerText = `${m.temp || "--"}°C`;
 
-        document.getElementById("metar").innerText = m.rawOb;
-        document.getElementById("vento").innerText = `${m.wdir || "--"}° ${m.wspd || "--"} kt`;
-        document.getElementById("vis").innerText = m.visib ? `${m.visib} km` : "--";
-        document.getElementById("temp").innerText = `${m.temp || "--"}°C`;
-
-        const status = document.getElementById("status");
-        const cat = m.fltCat || "VFR";
-        status.innerText = cat;
-        status.className = "status " + cat.toLowerCase();
-
-        // TAF
-        const tafUrl = `https://aviationweather.gov/api/data/taf?ids=${ICAO}&format=json`;
-        const tafRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(tafUrl)}`);
-        const tafData = await tafRes.json();
-
-        if (tafData && tafData.length > 0) {
-            document.getElementById("taf").innerText = tafData[0].rawTAF;
+            const status = document.getElementById("status");
+            const cat = m.fltCat || "VFR";
+            status.innerText = cat;
+            status.className = "status " + cat.toLowerCase();
         }
 
-        document.getElementById("hora").innerText =
-            "Atualizado: " + new Date().toLocaleTimeString();
+    } catch (e) {
+        console.error("Erro METAR:", e);
+        document.getElementById("status").innerText = "ERRO METAR";
+    }
+
+    // ===== TAF (RAW MAIS ESTÁVEL) =====
+    try {
+        const tafUrl = `https://aviationweather.gov/api/data/taf?ids=${ICAO}&format=raw`;
+        const tafRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(tafUrl)}`);
+        const tafText = await tafRes.text();
+
+        if (tafText && !tafText.includes("No data")) {
+            document.getElementById("taf").innerText = tafText;
+        } else {
+            document.getElementById("taf").innerText = "TAF indisponível";
+        }
 
     } catch (e) {
-        console.error(e);
-        document.getElementById("status").innerText = "ERRO";
+        console.error("Erro TAF:", e);
+        document.getElementById("taf").innerText = "Erro ao carregar TAF";
     }
+
+    document.getElementById("hora").innerText =
+        "Atualizado: " + new Date().toLocaleTimeString();
 }
 
+// Atualiza a cada 5 min
 setInterval(atualizar, 300000);
+
+// Primeira execução
 atualizar();
 </script>
 
