@@ -76,14 +76,12 @@ body {
 .mvfr { background: #2979ff; }
 .ifr { background: #d50000; }
 .lifr { background: #aa00ff; }
-
 </style>
 </head>
 
 <body>
 
 <div class="container">
-
     <div class="titulo">SBSR</div>
     <div id="status" class="status">Carregando...</div>
 
@@ -107,19 +105,17 @@ body {
     </div>
 
     <div class="footer" id="hora"></div>
-
 </div>
 
 <script>
-
 const ICAO = "SBSR";
 
 async function atualizar() {
     try {
         const url = `https://aviationweather.gov/api/data/metar?ids=${ICAO}&format=json`;
 
-        // 🔥 PROXY AQUI
-        const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+        // 🔥 Proxy estável
+        const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
 
         const data = await res.json();
 
@@ -156,9 +152,11 @@ async function atualizar() {
     }
 }
 
+// Atualiza a cada 5 min
 setInterval(atualizar, 300000);
-atualizar();
 
+// Primeira execução
+atualizar();
 </script>
 
 </body>
