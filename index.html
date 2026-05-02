@@ -2,89 +2,73 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Painel METAR - SBSR</title>
+<title>Painel Aviação</title>
 
 <style>
 body {
     margin: 0;
     background: #0b0f14;
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: Arial;
     color: white;
 }
 
 .container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     height: 100vh;
-    text-align: center;
+}
+
+.left {
+    padding: 20px;
 }
 
 .logo {
-    width: 120px;
-    margin-bottom: 10px;
+    width: 100px;
 }
 
 .titulo {
-    font-size: 55px;
-    font-weight: bold;
+    font-size: 40px;
 }
 
 .status {
-    font-size: 30px;
+    font-size: 28px;
+    padding: 8px;
+    border-radius: 10px;
+    display: inline-block;
     margin-top: 10px;
-    padding: 10px 25px;
-    border-radius: 12px;
-    font-weight: bold;
-}
-
-.metar {
-    font-size: 26px;
-    margin: 15px;
-    max-width: 85%;
-}
-
-.taf {
-    font-size: 20px;
-    color: #ccc;
-    max-width: 85%;
-    white-space: pre-wrap;
 }
 
 .grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 25px;
+    display: flex;
+    gap: 20px;
     margin-top: 20px;
 }
 
 .box {
     background: #121821;
-    padding: 20px;
-    border-radius: 15px;
-}
-
-.label {
-    font-size: 16px;
-    color: #aaa;
+    padding: 15px;
+    border-radius: 10px;
 }
 
 .valor {
-    font-size: 30px;
+    font-size: 28px;
 }
 
-.footer {
-    position: absolute;
-    bottom: 15px;
-    font-size: 14px;
-    color: #888;
+.right iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
 }
 
 .vfr { background: #00c853; }
 .mvfr { background: #2979ff; }
 .ifr { background: #d50000; }
 .lifr { background: #aa00ff; }
+
+.vento-seta {
+    font-size: 40px;
+}
+
 </style>
 </head>
 
@@ -92,92 +76,114 @@ body {
 
 <div class="container">
 
-    <img src="logo.png" class="logo">
+<div class="left">
 
-    <div class="titulo">SBSR</div>
-    <div id="status" class="status">Carregando...</div>
+<img src="logo.png" class="logo">
 
-    <div id="metar" class="metar">Aguardando dados...</div>
-    <div id="taf" class="taf">Carregando TAF...</div>
+<div class="titulo">SBSR</div>
+<div id="status" class="status">...</div>
 
-    <div class="grid">
-        <div class="box">
-            <div class="label">Vento</div>
-            <div id="vento" class="valor">--</div>
-        </div>
+<div id="metar"></div>
 
-        <div class="box">
-            <div class="label">Visibilidade</div>
-            <div id="vis" class="valor">--</div>
-        </div>
-
-        <div class="box">
-            <div class="label">Temperatura</div>
-            <div id="temp" class="valor">--</div>
-        </div>
+<div class="grid">
+    <div class="box">
+        <div>Vento</div>
+        <div id="vento" class="valor"></div>
+        <div id="seta" class="vento-seta"></div>
     </div>
 
-    <div class="footer" id="hora"></div>
+    <div class="box">
+        <div>Vis</div>
+        <div id="vis" class="valor"></div>
+    </div>
+
+    <div class="box">
+        <div>Temp</div>
+        <div id="temp" class="valor"></div>
+    </div>
+
+    <div class="box">
+        <div>Teto</div>
+        <div id="teto" class="valor"></div>
+    </div>
+</div>
+
+<h3>Alternados</h3>
+<div id="alt"></div>
+
+<div id="hora"></div>
+
+</div>
+
+<div class="right">
+<iframe src="https://embed.windy.com/embed2.html?lat=-20.82&lon=-49.38&zoom=7&level=surface&overlay=radar"></iframe>
+</div>
 
 </div>
 
 <script>
-const ICAO = "SBSR";
+const aeroportos = ["SBSR","SBRP"];
 
-async function atualizar() {
+function setaVento(dir){
+    if (!dir) return "";
+    const d = parseInt(dir);
 
-    // ===== METAR =====
-    try {
-        const metarUrl = `https://aviationweather.gov/api/data/metar?ids=${ICAO}&format=json`;
+    if (d >= 45 && d < 135) return "→";
+    if (d >= 135 && d < 225) return "↓";
+    if (d >= 225 && d < 315) return "←";
+    return "↑";
+}
 
-        const metarRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(metarUrl)}&_=${Date.now()}`);
-        const metarData = await metarRes.json();
+function teto(clouds){
+    if (!clouds || clouds.length === 0) return "--";
+    return clouds[0].cover + " " + clouds[0].base + "ft";
+}
 
-        if (metarData && metarData.length > 0) {
-            const m = metarData[0];
+async function pegar(icao){
+    const url = `https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`;
+    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}&_=${Date.now()}`);
+    return await res.json();
+}
 
-            document.getElementById("metar").innerText = m.rawOb;
-            document.getElementById("vento").innerText = `${m.wdir || "--"}° ${m.wspd || "--"} kt`;
-            document.getElementById("vis").innerText = m.visib ? `${m.visib} km` : "--";
-            document.getElementById("temp").innerText = `${m.temp || "--"}°C`;
+async function atualizar(){
 
-            const status = document.getElementById("status");
-            const cat = m.fltCat || "VFR";
-            status.innerText = cat;
-            status.className = "status " + cat.toLowerCase();
-        }
+    // PRINCIPAL
+    try{
+        const data = await pegar("SBSR");
+        const m = data[0];
 
-    } catch (e) {
-        console.error("Erro METAR:", e);
-        document.getElementById("status").innerText = "ERRO METAR";
+        document.getElementById("metar").innerText = m.rawOb;
+        document.getElementById("vento").innerText = `${m.wdir}° ${m.wspd}kt`;
+        document.getElementById("seta").innerText = setaVento(m.wdir);
+        document.getElementById("vis").innerText = m.visib;
+        document.getElementById("temp").innerText = m.temp + "°C";
+        document.getElementById("teto").innerText = teto(m.clouds);
+
+        const s = document.getElementById("status");
+        s.innerText = m.fltCat;
+        s.className = "status " + m.fltCat.toLowerCase();
+
+    } catch{
+        document.getElementById("status").innerText = "ERRO";
     }
 
-    // ===== TAF =====
-    try {
-        const tafUrl = `https://aviationweather.gov/api/data/taf?ids=${ICAO}&format=raw`;
-
-        const tafRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(tafUrl)}&_=${Date.now()}`);
-        const tafText = await tafRes.text();
-
-        if (tafText && !tafText.includes("No data") && tafText.length > 10) {
-            document.getElementById("taf").innerText = tafText;
-        } else {
-            document.getElementById("taf").innerText = "TAF não disponível no momento";
-        }
-
-    } catch (e) {
-        console.error("Erro TAF:", e);
-        document.getElementById("taf").innerText = "Erro ao carregar TAF";
+    // ALTERNADOS
+    let texto = "";
+    for (let i = 1; i < aeroportos.length; i++){
+        try{
+            const d = await pegar(aeroportos[i]);
+            const m = d[0];
+            texto += `${aeroportos[i]} - ${m.fltCat} <br>`;
+        } catch{}
     }
+
+    document.getElementById("alt").innerHTML = texto;
 
     document.getElementById("hora").innerText =
         "Atualizado: " + new Date().toLocaleTimeString();
 }
 
-// Atualiza a cada 5 minutos
 setInterval(atualizar, 300000);
-
-// Primeira execução
 atualizar();
 </script>
 
