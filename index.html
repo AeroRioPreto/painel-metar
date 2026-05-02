@@ -48,7 +48,7 @@ body {
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr); /* ajustado */
     gap: 10px;
 }
 
@@ -114,7 +114,6 @@ body {
 <div class="box"><div>Vis</div><div id="vis" class="valor"></div></div>
 <div class="box"><div>Temp</div><div id="temp" class="valor"></div></div>
 <div class="box"><div>Teto</div><div id="teto" class="valor"></div></div>
-<div class="box"><div>Pista</div><div id="pista" class="valor"></div></div>
 </div>
 
 <div class="curiosidade">
@@ -140,40 +139,41 @@ body {
 <script>
 
 // ======================
-// CURIOSIDADES
+// CURIOSIDADES (completas)
 // ======================
 
 const curiosidadesVIP = [
-"✈️ Aviões voam a mais de 10 km de altitude.",
-"🌍 O voo mais longo dura mais de 18 horas.",
-"🛫 Decolar contra o vento ajuda a subir mais rápido.",
-"🌬️ Ventos podem reduzir o tempo de voo.",
-"⚡ Aviões são preparados para raios.",
-"🛬 Pistas seguem direção magnética",
-"🌫️ Baixa visibilidade dificulta pousos",
-"🧭 Pilotos usam graus para navegação"
+"✈️ Aviões comerciais voam entre 30.000 e 40.000 pés.",
+"🌍 O voo mais longo do mundo dura mais de 18 horas.",
+"🛫 Decolar contra o vento reduz a distância necessária.",
+"🌬️ Ventos podem encurtar ou aumentar o tempo de voo.",
+"⚡ Aviões são projetados para resistir a raios.",
+"🛬 Pistas são numeradas pela direção magnética.",
+"🌫️ Visibilidade baixa pode impedir pousos visuais.",
+"🧭 Pilotos usam graus para navegação.",
+"🌡️ Ar frio melhora a performance da aeronave."
 ];
 
 const curiosidadesAluno = [
-"🛫 Altitude densidade reduz performance.",
-"🌡️ Calor aumenta distância de decolagem.",
-"🧭 Heading e track são diferentes com vento.",
-"⚖️ Peso maior exige maior velocidade",
-"☁️ BKN define teto operacional",
-"🌬️ Crosswind afeta pouso",
-"🛫 Flaps aumentam sustentação",
-"📡 METAR é observação atual"
+"🛫 Altitude densidade elevada reduz a performance.",
+"🌡️ Temperatura alta aumenta a distância de decolagem.",
+"🧭 Heading e track diferem por causa do vento.",
+"⚖️ Peso maior exige maior velocidade de decolagem.",
+"☁️ Teto é definido por BKN ou OVC.",
+"🌬️ Crosswind é o componente lateral do vento.",
+"🛫 Flaps aumentam sustentação e arrasto.",
+"📡 METAR é observado, TAF é previsto."
 ];
 
 const curiosidadesAvancado = [
-"🛩️ Razão de subida depende de potência excedente",
-"⚠️ Tailwind aumenta distância de pouso",
-"🧭 Altímetro depende do QNH correto",
-"🌪️ CB causa turbulência severa",
-"📡 NOTAM altera operações",
-"🛫 Vx e Vy variam com peso",
-"⚖️ CG afeta estabilidade",
-"🌬️ Wind shear é crítico"
+"🛩️ Razão de subida depende da potência excedente.",
+"📉 Alta altitude densidade reduz sustentação.",
+"⚠️ Tailwind aumenta distância de pouso.",
+"🧭 Altímetro requer ajuste de QNH.",
+"🌪️ CB indica turbulência severa.",
+"📡 NOTAM pode alterar procedimentos.",
+"⚖️ CG fora do envelope compromete estabilidade.",
+"🌬️ Wind shear é crítico."
 ];
 
 let nivelAtual = 0;
@@ -218,24 +218,6 @@ if(!c||!c.length)return"--";
 return c[0].cover+" "+c[0].base+"ft";
 }
 
-function calcularPista(wdir){
-const pistas=[{nome:"07",dir:70},{nome:"25",dir:250}];
-let melhor=null;
-
-pistas.forEach(p=>{
-let ang=Math.abs(wdir-p.dir);
-if(ang>180) ang=360-ang;
-
-let head=Math.cos(ang*Math.PI/180);
-
-if(!melhor||head>melhor.head){
-melhor={pista:p.nome};
-}
-});
-
-return melhor.pista;
-}
-
 async function atualizar(){
 
 try{
@@ -247,8 +229,6 @@ document.getElementById("vento").innerText=`${m.wdir}° ${m.wspd}kt`;
 document.getElementById("vis").innerText=visMetros(m.visib);
 document.getElementById("temp").innerText=m.temp+"°C";
 document.getElementById("teto").innerText=teto(m.clouds);
-document.getElementById("pista").innerText=
-calcularPista(parseInt(m.wdir));
 
 let s=document.getElementById("status");
 s.innerText=m.fltCat;
