@@ -19,78 +19,65 @@ body {
 }
 
 .left {
-    padding: 30px;
+    padding: 25px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
 }
 
 .header {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 15px;
 }
 
-.logo {
-    width: 80px;
-}
-
-.titulo {
-    font-size: 36px;
-    font-weight: bold;
-}
+.logo { width: 70px; }
+.titulo { font-size: 34px; }
 
 .status {
-    font-size: 26px;
-    padding: 8px 16px;
-    border-radius: 10px;
-    display: inline-block;
-    margin-top: 10px;
+    font-size: 22px;
+    padding: 6px 12px;
+    border-radius: 8px;
 }
 
 .metar {
-    font-size: 20px;
     background: #121821;
-    padding: 15px;
-    border-radius: 10px;
+    padding: 10px;
+    border-radius: 8px;
 }
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
 }
 
 .box {
     background: #121821;
-    padding: 15px;
-    border-radius: 10px;
+    padding: 10px;
+    border-radius: 8px;
     text-align: center;
 }
 
-.label {
-    font-size: 14px;
-    color: #aaa;
-}
+.valor { font-size: 18px; }
 
-.valor {
-    font-size: 24px;
-    margin-top: 5px;
-}
-
-.vento-seta {
-    font-size: 30px;
+.curiosidade {
+    background: #1a2430;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 18px;
+    line-height: 1.5;
 }
 
 .alt {
     background: #121821;
-    padding: 15px;
-    border-radius: 10px;
+    padding: 10px;
+    border-radius: 8px;
 }
 
 .footer {
     margin-top: auto;
-    font-size: 14px;
+    font-size: 12px;
     color: #888;
 }
 
@@ -104,7 +91,6 @@ body {
 .mvfr { background: #2979ff; }
 .ifr { background: #d50000; }
 .lifr { background: #aa00ff; }
-
 </style>
 </head>
 
@@ -115,40 +101,30 @@ body {
 <div class="left">
 
 <div class="header">
-    <img src="logo.png" class="logo">
-    <div class="titulo">SBSR</div>
+<img src="logo.png" class="logo">
+<div class="titulo">SBSR</div>
 </div>
 
-<div id="status" class="status">...</div>
+<div id="status" class="status"></div>
 
 <div id="metar" class="metar"></div>
 
 <div class="grid">
-    <div class="box">
-        <div class="label">Vento</div>
-        <div id="vento" class="valor"></div>
-        <div id="seta" class="vento-seta"></div>
-    </div>
+<div class="box"><div>Vento</div><div id="vento" class="valor"></div></div>
+<div class="box"><div>Vis</div><div id="vis" class="valor"></div></div>
+<div class="box"><div>Temp</div><div id="temp" class="valor"></div></div>
+<div class="box"><div>Teto</div><div id="teto" class="valor"></div></div>
+<div class="box"><div>Pista</div><div id="pista" class="valor"></div></div>
+</div>
 
-    <div class="box">
-        <div class="label">Visibilidade</div>
-        <div id="vis" class="valor"></div>
-    </div>
-
-    <div class="box">
-        <div class="label">Temperatura</div>
-        <div id="temp" class="valor"></div>
-    </div>
-
-    <div class="box">
-        <div class="label">Teto</div>
-        <div id="teto" class="valor"></div>
-    </div>
+<div class="curiosidade">
+<b>Curiosidade da aviação</b><br>
+<div id="curiosidade"></div>
 </div>
 
 <div class="alt">
-    <strong>Aeroportos próximos:</strong><br>
-    <div id="alt"></div>
+<b>Alternado (SBRP):</b><br>
+<div id="alt"></div>
 </div>
 
 <div class="footer" id="hora"></div>
@@ -156,79 +132,149 @@ body {
 </div>
 
 <div class="right">
-<iframe src="https://embed.windy.com/embed2.html?lat=-20.82&lon=-49.38&zoom=7&level=surface&overlay=radar"></iframe>
+<iframe src="https://embed.windy.com/embed2.html?lat=-20.82&lon=-49.38&zoom=7&overlay=radar"></iframe>
 </div>
 
 </div>
 
 <script>
-const aeroportos = ["SBSR","SBRP","SBAU"];
 
-// 🔥 SETA CORRETA (vento indo para onde sopra)
-function setaVento(dir){
-    if (!dir || dir === "VRB") return "↻";
+// ======================
+// CURIOSIDADES
+// ======================
 
-    let d = (parseInt(dir) + 180) % 360;
+const curiosidadesVIP = [
+"✈️ Aviões voam a mais de 10 km de altitude.",
+"🌍 O voo mais longo dura mais de 18 horas.",
+"🛫 Decolar contra o vento ajuda a subir mais rápido.",
+"🌬️ Ventos podem reduzir o tempo de voo.",
+"⚡ Aviões são preparados para raios.",
+"🛬 Pistas seguem direção magnética",
+"🌫️ Baixa visibilidade dificulta pousos",
+"🧭 Pilotos usam graus para navegação"
+];
 
-    if (d < 22.5 || d >= 337.5) return "↑";
-    if (d < 67.5) return "↗";
-    if (d < 112.5) return "→";
-    if (d < 157.5) return "↘";
-    if (d < 202.5) return "↓";
-    if (d < 247.5) return "↙";
-    if (d < 292.5) return "←";
-    return "↖";
+const curiosidadesAluno = [
+"🛫 Altitude densidade reduz performance.",
+"🌡️ Calor aumenta distância de decolagem.",
+"🧭 Heading e track são diferentes com vento.",
+"⚖️ Peso maior exige maior velocidade",
+"☁️ BKN define teto operacional",
+"🌬️ Crosswind afeta pouso",
+"🛫 Flaps aumentam sustentação",
+"📡 METAR é observação atual"
+];
+
+const curiosidadesAvancado = [
+"🛩️ Razão de subida depende de potência excedente",
+"⚠️ Tailwind aumenta distância de pouso",
+"🧭 Altímetro depende do QNH correto",
+"🌪️ CB causa turbulência severa",
+"📡 NOTAM altera operações",
+"🛫 Vx e Vy variam com peso",
+"⚖️ CG afeta estabilidade",
+"🌬️ Wind shear é crítico"
+];
+
+let nivelAtual = 0;
+const niveis = ["👤 Geral","🎓 Aluno","🛩️ Avançado"];
+
+function pegarLista(){
+if(nivelAtual===0) return curiosidadesVIP;
+if(nivelAtual===1) return curiosidadesAluno;
+return curiosidadesAvancado;
 }
 
-function teto(clouds){
-    if (!clouds || clouds.length === 0) return "--";
-    return clouds[0].cover + " " + clouds[0].base + "ft";
+function rodarCuriosidades(){
+const lista=pegarLista();
+const texto=lista[Math.floor(Math.random()*lista.length)];
+
+document.getElementById("curiosidade").innerHTML =
+`<b>${niveis[nivelAtual]}</b><br>${texto}`;
 }
+
+setInterval(rodarCuriosidades,8000);
+setInterval(()=>{nivelAtual=(nivelAtual+1)%3},30000);
+rodarCuriosidades();
+
+// ======================
+// METAR
+// ======================
 
 async function pegar(icao){
-    const url = `https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`;
-    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}&_=${Date.now()}`);
-    return await res.json();
+const url=`https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`;
+const res=await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}&_=${Date.now()}`);
+return await res.json();
+}
+
+function visMetros(v){
+if(!v) return "--";
+if(v==="6+"||v==="9999") return "9999 m";
+return (parseFloat(v)*1000)+" m";
+}
+
+function teto(c){
+if(!c||!c.length)return"--";
+return c[0].cover+" "+c[0].base+"ft";
+}
+
+function calcularPista(wdir){
+const pistas=[{nome:"07",dir:70},{nome:"25",dir:250}];
+let melhor=null;
+
+pistas.forEach(p=>{
+let ang=Math.abs(wdir-p.dir);
+if(ang>180) ang=360-ang;
+
+let head=Math.cos(ang*Math.PI/180);
+
+if(!melhor||head>melhor.head){
+melhor={pista:p.nome};
+}
+});
+
+return melhor.pista;
 }
 
 async function atualizar(){
 
-    try{
-        const data = await pegar("SBSR");
-        const m = data[0];
+try{
+const d=await pegar("SBSR");
+const m=d[0];
 
-        document.getElementById("metar").innerText = m.rawOb;
-        document.getElementById("vento").innerText = `${m.wdir}° ${m.wspd}kt`;
-        document.getElementById("seta").innerText = setaVento(m.wdir);
-        document.getElementById("vis").innerText = m.visib;
-        document.getElementById("temp").innerText = m.temp + "°C";
-        document.getElementById("teto").innerText = teto(m.clouds);
+document.getElementById("metar").innerText=m.rawOb;
+document.getElementById("vento").innerText=`${m.wdir}° ${m.wspd}kt`;
+document.getElementById("vis").innerText=visMetros(m.visib);
+document.getElementById("temp").innerText=m.temp+"°C";
+document.getElementById("teto").innerText=teto(m.clouds);
+document.getElementById("pista").innerText=
+calcularPista(parseInt(m.wdir));
 
-        const s = document.getElementById("status");
-        s.innerText = m.fltCat;
-        s.className = "status " + m.fltCat.toLowerCase();
+let s=document.getElementById("status");
+s.innerText=m.fltCat;
+s.className="status "+m.fltCat.toLowerCase();
 
-    } catch{
-        document.getElementById("status").innerText = "ERRO";
-    }
-
-    let texto = "";
-    for (let i = 1; i < aeroportos.length; i++){
-        try{
-            const d = await pegar(aeroportos[i]);
-            const m = d[0];
-            texto += `${aeroportos[i]} → ${m.fltCat}<br>`;
-        } catch{}
-    }
-
-    document.getElementById("alt").innerHTML = texto;
-
-    document.getElementById("hora").innerText =
-        "Atualizado: " + new Date().toLocaleTimeString();
+}catch{
+document.getElementById("status").innerText="ERRO";
 }
 
-setInterval(atualizar, 300000);
+// alternado
+try{
+const d=await pegar("SBRP");
+const m=d[0];
+
+document.getElementById("alt").innerHTML =
+`${m.fltCat} | ${m.wdir}° ${m.wspd}kt`;
+
+}catch{}
+
+document.getElementById("hora").innerText =
+"Atualizado: " + new Date().toLocaleTimeString();
+}
+
+setInterval(atualizar,300000);
 atualizar();
+
 </script>
 
 </body>
