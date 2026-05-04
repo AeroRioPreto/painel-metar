@@ -5,54 +5,131 @@
 <title>Painel Aviação</title>
 
 <style>
-body { margin:0; background:#0b0f14; font-family:Arial; color:white; }
+body {
+    margin:0;
+    font-family:Arial;
+    color:white;
+    background: linear-gradient(180deg, #0b0f14, #0e141c);
+}
 
-.container { display:grid; grid-template-columns:60% 40%; height:100vh; }
+.container {
+    display:grid;
+    grid-template-columns:60% 40%;
+    height:100vh;
+}
 
-.left { padding:25px; display:flex; flex-direction:column; gap:15px; }
+.left {
+    padding:25px;
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+}
 
-.header { display:flex; align-items:center; gap:15px; }
+.header {
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
 .logo { width:70px; }
-.titulo { font-size:34px; }
 
-.status { font-size:22px; padding:6px 12px; border-radius:8px; }
-.metar { background:#121821; padding:10px; border-radius:8px; }
+.titulo {
+    font-size:36px;
+    font-weight:600;
+    letter-spacing:1px;
+}
 
-.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.status {
+    font-size:22px;
+    padding:6px 12px;
+    border-radius:10px;
+    animation: pulse 3s infinite;
+}
 
-.box { background:#121821; padding:10px; border-radius:8px; text-align:center; }
+/* caixas premium */
+.box, .metar, .curiosidade, .alt {
+    background:#121821;
+    padding:12px;
+    border-radius:14px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.4);
+    transition:0.3s;
+}
 
-.curiosidade { background:#1a2430; padding:15px; border-radius:10px; }
+.box:hover, .metar:hover, .curiosidade:hover, .alt:hover {
+    transform:translateY(-2px);
+}
 
-.alt { background:#121821; padding:10px; border-radius:8px; }
+.grid {
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+}
 
-.footer { margin-top:auto; font-size:12px; color:#888; }
+.curiosidade {
+    min-height:90px;
+}
 
-.right { position:relative; }
+.footer {
+    margin-top:auto;
+    font-size:12px;
+    color:#888;
+}
 
+.right {
+    padding:20px;
+    position:relative;
+}
+
+/* mapa arredondado */
+.mapa {
+    height:100%;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,0.6);
+}
+
+.mapa iframe {
+    width:100%;
+    height:100%;
+    border:none;
+}
+
+/* botão rádio */
 button {
-position:absolute;
-bottom:10px;
-right:10px;
-z-index:10;
-padding:12px;
-border:none;
-border-radius:10px;
-background:#00c853;
-color:black;
-font-weight:bold;
-cursor:pointer;
-font-size:14px;
+    position:absolute;
+    bottom:20px;
+    right:20px;
+    padding:12px;
+    border:none;
+    border-radius:12px;
+    background:#00c853;
+    color:black;
+    font-weight:bold;
+    cursor:pointer;
+    box-shadow:0 4px 12px rgba(0,0,0,0.5);
 }
 
-button:hover {
-background:#00e676;
-}
-
+/* status cores */
 .vfr { background:#00c853; }
 .mvfr { background:#2979ff; }
 .ifr { background:#d50000; }
 .lifr { background:#aa00ff; }
+
+/* animações */
+.fade {
+    opacity:0;
+    transition:opacity 0.8s;
+}
+
+.fade.show {
+    opacity:1;
+}
+
+@keyframes pulse {
+    0% { box-shadow:0 0 0px rgba(0,200,83,0.5); }
+    50% { box-shadow:0 0 12px rgba(0,200,83,0.7); }
+    100% { box-shadow:0 0 0px rgba(0,200,83,0.5); }
+}
 
 </style>
 </head>
@@ -81,11 +158,11 @@ background:#00e676;
 
 <div class="curiosidade">
 <b>Curiosidade da aviação</b><br>
-<div id="curiosidade"></div>
+<div id="curiosidade" class="fade show"></div>
 </div>
 
 <div class="alt">
-<b>Alternado (SBRP):</b><br>
+<b>Alternado (SBRP)</b><br>
 <div id="alt"></div>
 </div>
 
@@ -95,14 +172,11 @@ background:#00e676;
 
 <div class="right">
 
-<!-- MAPA -->
-<iframe 
-src="https://embed.windy.com/embed2.html?lat=-20.82&lon=-49.38&zoom=7&overlay=radar"
-style="width:100%; height:100%; border:none;">
-</iframe>
+<div class="mapa">
+<iframe src="https://embed.windy.com/embed2.html?lat=-20.82&lon=-49.38&zoom=7&overlay=radar"></iframe>
+</div>
 
-<!-- BOTÃO RÁDIO -->
-<button onclick="abrirRadio()">📻 Rádio SBSR</button>
+<button onclick="abrirRadio()">📻 Rádio</button>
 
 </div>
 
@@ -110,7 +184,7 @@ style="width:100%; height:100%; border:none;">
 
 <script>
 
-// 🔑 SUA API AVWX (troque depois por segurança)
+// 🔑 API AVWX (troque depois por segurança)
 const API_KEY = "Fb_8qgbHtbFaG2CrBD7mHpw2RlcAei9pMJYolbt43oE";
 
 // ======================
@@ -118,54 +192,55 @@ const API_KEY = "Fb_8qgbHtbFaG2CrBD7mHpw2RlcAei9pMJYolbt43oE";
 // ======================
 
 const curiosidades = [
-"🛫 Altitude densidade reduz performance",
-"🌡️ Calor aumenta distância de decolagem",
-"🌬️ Crosswind é componente lateral",
-"🛬 Aproximação é contra o vento",
-"⚠️ Wind shear é crítico",
-"🧭 Heading ≠ Track com vento",
-"🛫 Vx e Vy são diferentes",
-"🌪️ CB gera turbulência severa",
-"📡 METAR é observação, TAF é previsão",
-"⚖️ Peso influencia distância de pouso"
+"✈️ O Boeing 737 possui motores CFM56 e LEAP-1B",
+"🛩️ O 737 usa comandos mecânicos com assistência hidráulica",
+"🧠 Sustentação: L = ½ρV²SCl",
+"⚠️ Wind shear pode causar perda de sustentação",
+"✈️ Aviões decolam contra o vento",
+"🌡️ Ar frio melhora desempenho",
+"🛫 V1 define decisão de decolagem",
+"🛬 Spoilers reduzem sustentação após o toque"
 ];
 
-setInterval(()=>{
-document.getElementById("curiosidade").innerText =
-curiosidades[Math.floor(Math.random()*curiosidades.length)];
-},8000);
+function rodarCuriosidades(){
+const el = document.getElementById("curiosidade");
+
+el.classList.remove("show");
+
+setTimeout(()=>{
+const texto = curiosidades[Math.floor(Math.random()*curiosidades.length)];
+el.innerText = texto;
+el.classList.add("show");
+},300);
+}
+
+setInterval(rodarCuriosidades,8000);
+rodarCuriosidades();
 
 // ======================
-// AVWX METAR
+// METAR
 // ======================
 
 async function fetchMetar(icao){
-
 try{
 const res = await fetch(`https://avwx.rest/api/metar/${icao}`, {
 headers: { Authorization: API_KEY }
 });
-
 const d = await res.json();
 
 return {
-rawOb: d.raw,
-wdir: d.wind_direction?.value || "--",
-wspd: d.wind_speed?.value || "--",
-visib: d.visibility?.value || "--",
-temp: d.temperature?.value || "--",
-fltCat: d.flight_rules || "--",
-clouds: d.clouds || []
+rawOb:d.raw,
+wdir:d.wind_direction?.value || "--",
+wspd:d.wind_speed?.value || "--",
+visib:d.visibility?.value || "--",
+temp:d.temperature?.value || "--",
+fltCat:d.flight_rules || "--",
+clouds:d.clouds || []
 };
-
 }catch{
 return null;
 }
 }
-
-// ======================
-// FORMATOS
-// ======================
 
 function visMetros(v){
 if(!v) return "--";
@@ -177,10 +252,6 @@ function teto(c){
 if(!c || !c.length) return "--";
 return c[0].type+" "+c[0].altitude+"ft";
 }
-
-// ======================
-// ATUALIZAÇÃO
-// ======================
 
 async function atualizar(){
 
@@ -198,7 +269,6 @@ document.getElementById("teto").innerText = teto(m.clouds);
 document.getElementById("status").innerText = "SEM DADOS";
 }
 
-// alternado SBRP
 const alt = await fetchMetar("SBRP");
 
 if(alt){
@@ -216,7 +286,7 @@ setInterval(atualizar,300000);
 atualizar();
 
 // ======================
-// RÁDIO (ABRIR EM NOVA ABA)
+// RÁDIO
 // ======================
 
 function abrirRadio(){
