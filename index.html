@@ -5,92 +5,31 @@
 <title>Painel Aviação</title>
 
 <style>
-body {
-    margin: 0;
-    background: #0b0f14;
-    font-family: Arial, sans-serif;
-    color: white;
-}
+body { margin:0; background:#0b0f14; font-family:Arial; color:white; }
+.container { display:grid; grid-template-columns:60% 40%; height:100vh; }
+.left { padding:25px; display:flex; flex-direction:column; gap:15px; }
+.header { display:flex; align-items:center; gap:15px; }
+.logo { width:70px; }
+.titulo { font-size:34px; }
 
-.container {
-    display: grid;
-    grid-template-columns: 60% 40%;
-    height: 100vh;
-}
+.status { font-size:22px; padding:6px 12px; border-radius:8px; }
+.metar { background:#121821; padding:10px; border-radius:8px; }
 
-.left {
-    padding: 25px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
+.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.box { background:#121821; padding:10px; border-radius:8px; text-align:center; }
 
-.header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
+.curiosidade { background:#1a2430; padding:15px; border-radius:10px; }
 
-.logo { width: 70px; }
-.titulo { font-size: 34px; }
+.alt { background:#121821; padding:10px; border-radius:8px; }
 
-.status {
-    font-size: 22px;
-    padding: 6px 12px;
-    border-radius: 8px;
-}
+.footer { margin-top:auto; font-size:12px; color:#888; }
 
-.metar {
-    background: #121821;
-    padding: 10px;
-    border-radius: 8px;
-}
+.right iframe { width:100%; height:100%; border:none; }
 
-.grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr); /* ajustado */
-    gap: 10px;
-}
-
-.box {
-    background: #121821;
-    padding: 10px;
-    border-radius: 8px;
-    text-align: center;
-}
-
-.valor { font-size: 18px; }
-
-.curiosidade {
-    background: #1a2430;
-    padding: 15px;
-    border-radius: 10px;
-    font-size: 18px;
-    line-height: 1.5;
-}
-
-.alt {
-    background: #121821;
-    padding: 10px;
-    border-radius: 8px;
-}
-
-.footer {
-    margin-top: auto;
-    font-size: 12px;
-    color: #888;
-}
-
-.right iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-.vfr { background: #00c853; }
-.mvfr { background: #2979ff; }
-.ifr { background: #d50000; }
-.lifr { background: #aa00ff; }
+.vfr { background:#00c853; }
+.mvfr { background:#2979ff; }
+.ifr { background:#d50000; }
+.lifr { background:#aa00ff; }
 </style>
 </head>
 
@@ -105,15 +44,15 @@ body {
 <div class="titulo">SBSR</div>
 </div>
 
-<div id="status" class="status"></div>
+<div id="status" class="status">Carregando...</div>
 
 <div id="metar" class="metar"></div>
 
 <div class="grid">
-<div class="box"><div>Vento</div><div id="vento" class="valor"></div></div>
-<div class="box"><div>Vis</div><div id="vis" class="valor"></div></div>
-<div class="box"><div>Temp</div><div id="temp" class="valor"></div></div>
-<div class="box"><div>Teto</div><div id="teto" class="valor"></div></div>
+<div class="box">Vento<br><div id="vento"></div></div>
+<div class="box">Vis<br><div id="vis"></div></div>
+<div class="box">Temp<br><div id="temp"></div></div>
+<div class="box">Teto<br><div id="teto"></div></div>
 </div>
 
 <div class="curiosidade">
@@ -139,117 +78,107 @@ body {
 <script>
 
 // ======================
-// CURIOSIDADES (completas)
+// 🔑 SUA API KEY
 // ======================
 
-const curiosidadesVIP = [
-"✈️ Aviões comerciais voam entre 30.000 e 40.000 pés.",
-"🌍 O voo mais longo do mundo dura mais de 18 horas.",
-"🛫 Decolar contra o vento reduz a distância necessária.",
-"🌬️ Ventos podem encurtar ou aumentar o tempo de voo.",
-"⚡ Aviões são projetados para resistir a raios.",
-"🛬 Pistas são numeradas pela direção magnética.",
-"🌫️ Visibilidade baixa pode impedir pousos visuais.",
-"🧭 Pilotos usam graus para navegação.",
-"🌡️ Ar frio melhora a performance da aeronave."
-];
-
-const curiosidadesAluno = [
-"🛫 Altitude densidade elevada reduz a performance.",
-"🌡️ Temperatura alta aumenta a distância de decolagem.",
-"🧭 Heading e track diferem por causa do vento.",
-"⚖️ Peso maior exige maior velocidade de decolagem.",
-"☁️ Teto é definido por BKN ou OVC.",
-"🌬️ Crosswind é o componente lateral do vento.",
-"🛫 Flaps aumentam sustentação e arrasto.",
-"📡 METAR é observado, TAF é previsto."
-];
-
-const curiosidadesAvancado = [
-"🛩️ Razão de subida depende da potência excedente.",
-"📉 Alta altitude densidade reduz sustentação.",
-"⚠️ Tailwind aumenta distância de pouso.",
-"🧭 Altímetro requer ajuste de QNH.",
-"🌪️ CB indica turbulência severa.",
-"📡 NOTAM pode alterar procedimentos.",
-"⚖️ CG fora do envelope compromete estabilidade.",
-"🌬️ Wind shear é crítico."
-];
-
-let nivelAtual = 0;
-const niveis = ["👤 Geral","🎓 Aluno","🛩️ Avançado"];
-
-function pegarLista(){
-if(nivelAtual===0) return curiosidadesVIP;
-if(nivelAtual===1) return curiosidadesAluno;
-return curiosidadesAvancado;
-}
-
-function rodarCuriosidades(){
-const lista=pegarLista();
-const texto=lista[Math.floor(Math.random()*lista.length)];
-
-document.getElementById("curiosidade").innerHTML =
-`<b>${niveis[nivelAtual]}</b><br>${texto}`;
-}
-
-setInterval(rodarCuriosidades,8000);
-setInterval(()=>{nivelAtual=(nivelAtual+1)%3},30000);
-rodarCuriosidades();
+const API_KEY = "Fb_8qgbHtbFaG2CrBD7mHpw2RlcAei9pMJYolbt43oE";
 
 // ======================
-// METAR
+// ✈️ CURIOSIDADES
 // ======================
 
-async function pegar(icao){
-const url=`https://aviationweather.gov/api/data/metar?ids=${icao}&format=json`;
-const res=await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}&_=${Date.now()}`);
-return await res.json();
+const curiosidades = [
+"🛫 Altitude densidade reduz performance",
+"🌡️ Calor aumenta distância de decolagem",
+"🌬️ Crosswind é componente lateral",
+"🛬 Aproximação é contra o vento",
+"⚠️ Wind shear é crítico",
+"🧭 Heading ≠ Track com vento",
+"🛫 Vx e Vy são diferentes",
+"🌪️ CB gera turbulência severa"
+];
+
+setInterval(()=>{
+document.getElementById("curiosidade").innerText =
+curiosidades[Math.floor(Math.random()*curiosidades.length)];
+},8000);
+
+// ======================
+// 🌤️ AVWX METAR
+// ======================
+
+async function fetchMetar(icao){
+
+try {
+const res = await fetch(`https://avwx.rest/api/metar/${icao}`, {
+headers: { Authorization: API_KEY }
+});
+
+const data = await res.json();
+
+return {
+rawOb: data.raw,
+wdir: data.wind_direction?.value || "--",
+wspd: data.wind_speed?.value || "--",
+visib: data.visibility?.value || "--",
+temp: data.temperature?.value || "--",
+fltCat: data.flight_rules || "--",
+clouds: data.clouds || []
+};
+
+} catch {
+return null;
 }
+}
+
+// ======================
+// FORMATOS
+// ======================
 
 function visMetros(v){
 if(!v) return "--";
-if(v==="6+"||v==="9999") return "9999 m";
-return (parseFloat(v)*1000)+" m";
+if(v>=10000) return "9999 m";
+return v+" m";
 }
 
 function teto(c){
-if(!c||!c.length)return"--";
-return c[0].cover+" "+c[0].base+"ft";
+if(!c||!c.length) return "--";
+return c[0].type+" "+c[0].altitude+"ft";
 }
+
+// ======================
+// ATUALIZAÇÃO
+// ======================
 
 async function atualizar(){
 
-try{
-const d=await pegar("SBSR");
-const m=d[0];
+// SBSR
+const m = await fetchMetar("SBSR");
 
-document.getElementById("metar").innerText=m.rawOb;
-document.getElementById("vento").innerText=`${m.wdir}° ${m.wspd}kt`;
-document.getElementById("vis").innerText=visMetros(m.visib);
-document.getElementById("temp").innerText=m.temp+"°C";
-document.getElementById("teto").innerText=teto(m.clouds);
-
-let s=document.getElementById("status");
-s.innerText=m.fltCat;
-s.className="status "+m.fltCat.toLowerCase();
-
-}catch{
-document.getElementById("status").innerText="ERRO";
+if(m){
+document.getElementById("status").innerText = m.fltCat;
+document.getElementById("status").className = "status "+m.fltCat.toLowerCase();
+document.getElementById("metar").innerText = m.rawOb;
+document.getElementById("vento").innerText = `${m.wdir}° ${m.wspd}kt`;
+document.getElementById("vis").innerText = visMetros(m.visib);
+document.getElementById("temp").innerText = m.temp+"°C";
+document.getElementById("teto").innerText = teto(m.clouds);
+}else{
+document.getElementById("status").innerText = "SEM DADOS";
 }
 
-// alternado
-try{
-const d=await pegar("SBRP");
-const m=d[0];
+// SBRP
+const alt = await fetchMetar("SBRP");
 
-document.getElementById("alt").innerHTML =
-`${m.fltCat} | ${m.wdir}° ${m.wspd}kt`;
-
-}catch{}
+if(alt){
+document.getElementById("alt").innerText =
+`${alt.fltCat} | ${alt.wdir}° ${alt.wspd}kt`;
+}else{
+document.getElementById("alt").innerText = "Indisponível";
+}
 
 document.getElementById("hora").innerText =
-"Atualizado: " + new Date().toLocaleTimeString();
+"Atualizado: "+new Date().toLocaleTimeString();
 }
 
 setInterval(atualizar,300000);
